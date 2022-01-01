@@ -10,10 +10,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final Stream<QuerySnapshot> _imageURLsStream = FirebaseFirestore.instance.collection('imageURLs').snapshots();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Home Page')),
+      appBar: AppBar(title: Text('Home Page Alan')),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
@@ -22,8 +23,8 @@ class _HomePageState extends State<HomePage> {
         },
       ),
       body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('imageURLs').snapshots(),
-        builder: (context, snapshot) {
+        stream: _imageURLsStream,
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           return !snapshot.hasData
               ? Center(
                   child: CircularProgressIndicator(),
@@ -31,7 +32,7 @@ class _HomePageState extends State<HomePage> {
               : Container(
                   padding: EdgeInsets.all(4),
                   child: GridView.builder(
-                      itemCount: snapshot.data.documents.length,
+                      itemCount: snapshot.data!.docs.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3),
                       itemBuilder: (context, index) {
@@ -40,7 +41,7 @@ class _HomePageState extends State<HomePage> {
                           child: FadeInImage.memoryNetwork(
                               fit: BoxFit.cover,
                               placeholder: kTransparentImage,
-                              image: snapshot.data.documents[index].get('url')),
+                              image: snapshot.data!.docs[index].get('url')),
                         );
                       }),
                 );

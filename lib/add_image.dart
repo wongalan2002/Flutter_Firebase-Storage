@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,11 +15,13 @@ class AddImage extends StatefulWidget {
 class _AddImageState extends State<AddImage> {
   bool uploading = false;
   double val = 0;
-  CollectionReference imgRef;
-  firebase_storage.Reference ref;
+  late CollectionReference imgRef;
+  late firebase_storage.Reference ref;
 
-  List<File> _image = [];
-  final picker = ImagePicker();
+  List<XFile>? _imageFileList = [];
+  dynamic _pickImageError;
+
+  final _picker = ImagePicker();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,7 +46,8 @@ class _AddImageState extends State<AddImage> {
             Container(
               padding: EdgeInsets.all(4),
               child: GridView.builder(
-                  itemCount: _image.length + 1,
+                itemCount: _imageFileList!.length+1,
+                  // itemCount: _image.length + 1,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3),
                   itemBuilder: (context, index) {
@@ -58,7 +62,7 @@ class _AddImageState extends State<AddImage> {
                             margin: EdgeInsets.all(3),
                             decoration: BoxDecoration(
                                 image: DecorationImage(
-                                    image: FileImage(_image[index - 1]),
+                                    image: FileImage(File(_imageFileList![index-1].path)),
                                     fit: BoxFit.cover)),
                           );
                   }),
@@ -89,21 +93,38 @@ class _AddImageState extends State<AddImage> {
   }
 
   chooseImage() async {
-    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+    // try {
+    //   final pickedFile = await _picker.pickImage(
+    //     source: ImageSource.gallery,
+    //   );
+    //   setState(() {
+    //     _imageFileList?.add(pickedFile!);
+    //     // _imageFile = pickedFile;
+    //   });
+    // } catch (e) {
+    //   setState(() {
+    //     _pickImageError = e;
+    //   });
+    // }
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
     setState(() {
-      _image.add(File(pickedFile?.path));
+      _imageFileList?.add(pickedFile!);
     });
-    if (pickedFile.path == null) retrieveLostData();
+    if (pickedFile?.path == null) retrieveLostData();
   }
 
   Future<void> retrieveLostData() async {
-    final LostData response = await picker.getLostData();
+    final LostDataResponse response = await _picker.retrieveLostData();
     if (response.isEmpty) {
       return;
     }
     if (response.file != null) {
       setState(() {
-        _image.add(File(response.file.path));
+        // _imageFile = response.file;
+        _imageFileList = response.files;
+        // _image.add(response.file));
       });
     } else {
       print(response.file);
@@ -113,14 +134,14 @@ class _AddImageState extends State<AddImage> {
   Future uploadFile() async {
     int i = 1;
 
-    for (var img in _image) {
+    for (var img in _imageFileList!) {
       setState(() {
-        val = i / _image.length;
+        val = i / _imageFileList!.length;
       });
       ref = firebase_storage.FirebaseStorage.instance
           .ref()
           .child('images/${Path.basename(img.path)}');
-      await ref.putFile(img).whenComplete(() async {
+      await ref.putFile(File(img.path)).whenComplete(() async {
         await ref.getDownloadURL().then((value) {
           imgRef.add({'url': value});
           i++;
