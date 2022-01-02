@@ -28,7 +28,7 @@ class _AddImageState extends State<AddImage> {
         appBar: AppBar(
           title: Text('Add Image'),
           actions: [
-            FlatButton(
+            TextButton(
                 onPressed: () {
                   setState(() {
                     uploading = true;
@@ -46,8 +46,7 @@ class _AddImageState extends State<AddImage> {
             Container(
               padding: EdgeInsets.all(4),
               child: GridView.builder(
-                itemCount: _imageFileList!.length+1,
-                  // itemCount: _image.length + 1,
+                  itemCount: _imageFileList!.length + 1,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3),
                   itemBuilder: (context, index) {
@@ -58,12 +57,38 @@ class _AddImageState extends State<AddImage> {
                                 onPressed: () =>
                                     !uploading ? chooseImage() : null),
                           )
-                        : Container(
-                            margin: EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                                image: DecorationImage(
-                                    image: FileImage(File(_imageFileList![index-1].path)),
-                                    fit: BoxFit.cover)),
+                        : Stack(
+                            children: [
+                              Align(
+                                alignment: AlignmentDirectional(0, 0),
+                                child: Container(
+                                  margin: EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                          image: FileImage(File(
+                                              _imageFileList![index - 1].path)),
+                                          fit: BoxFit.cover,
+                                      )),
+                                ),
+                              ),
+                              Align(
+                                  alignment: AlignmentDirectional(1, -1),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                        shape: CircleBorder(),
+                                        padding: EdgeInsets.all(0)),
+                                    child: Icon(
+                                      Icons.delete,
+                                      size: 15,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _imageFileList!.removeAt(index-1);
+                                      });
+                                      print(index);
+                                    },
+                                  )),
+                            ],
                           );
                   }),
             ),
@@ -93,19 +118,6 @@ class _AddImageState extends State<AddImage> {
   }
 
   chooseImage() async {
-    // try {
-    //   final pickedFile = await _picker.pickImage(
-    //     source: ImageSource.gallery,
-    //   );
-    //   setState(() {
-    //     _imageFileList?.add(pickedFile!);
-    //     // _imageFile = pickedFile;
-    //   });
-    // } catch (e) {
-    //   setState(() {
-    //     _pickImageError = e;
-    //   });
-    // }
     final pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
     );
